@@ -6,4 +6,4 @@
 
 🚧This project is currently **Work In Progress** and far from production-ready👷‍♀️
 
-This library is designed to be used in [Tauri](tauri.app) projects that use TypeScript. It generates TypeScript bindings to types and functions defined in Rust 
+This library is designed to be used in [Tauri](https://tauri.app/) projects that use TypeScript. It generates TypeScript bindings to types and functions defined in Rust 
