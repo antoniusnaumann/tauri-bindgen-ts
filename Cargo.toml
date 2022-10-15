@@ -1,6 +1,6 @@
 [package]
-name = "src-macro"
-version = "0.1.0"
+name = "tauri-bindgen-ts"
+version = "0.1.0-alpha01"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -12,3 +12,4 @@ proc-macro = true
 proc-macro2 = "1.0.47"
 quote = "1.0.21"
 syn = { version = "1.0.102", features = ["extra-traits", "full"] }
+ts-rs = "6.2.0"

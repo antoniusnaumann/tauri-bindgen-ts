@@ -1,6 +1,8 @@
 use proc_macro::TokenStream;
 use quote::{quote, format_ident};
-use syn::{ItemFn, FnArg, Type};
+use syn::{ItemFn, FnArg, Type, Pat, PatType, Path, Ident};
+
+use ts_rs::TS;
 
 #[proc_macro_attribute]
 pub fn entity(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -31,23 +33,38 @@ pub fn command(_attr: TokenStream, item: TokenStream) -> TokenStream {
 struct TsFunc {
     name: String,
     binding: String,
+    args: Vec<(Ident, Path)>,
 }
 
 fn func_to_ts(func: ItemFn) -> TsFunc {
     let name = func.sig.ident.to_string();
-    // TODO: Implement mechanism to skip args such as tauris app handle (can be done with attrs)
-    let args = func.sig.inputs.iter().filter_map(|arg| if let FnArg::Typed(t) = arg { Some(t) } else { None });
+    // TODO: Implement mechanism to skip args such as tauris app handle (can be done with attrs
+    let args = func.sig.inputs.into_iter()
+        .filter_map(|arg| if let FnArg::Typed(t) = arg { Some(t) } else { panic!("Only top-level functions are allowed as commands!") })
+        .collect::<Vec<_>>();
     // TODO: Support more function arg types
-    let ts_args = args.map(|arg| arg.ty.clone()).filter_map(|ty| if let Type::Verbatim(t) = *ty { Some(t) } else { None }).collect::<Vec<_>>();
+    let args = types(&args);
 
     // TODO: Convert name to snake case
-    let binding = format!("export async function {name}(/*TODO: Insert parameters*/) {{ return await invoke('{name}' /*TODO: Insert parameters*/) }}");
+    let binding = format!("export async function {name}(%0) {{ return await invoke('{name}', {{ %1 }}) }}");
 
-    TsFunc { name, binding }
+    TsFunc { name, binding, args }
+}
+
+fn types(args: &[PatType]) -> Vec<(Ident, Path)> {
+    args.iter()
+        .map(|arg| (arg.pat.clone(), arg.ty.clone()))
+        .filter_map(|(pat, ty)| if let Pat::Ident(p) = *pat { Some((p, ty)) } else { panic!("Only simple owned types are allowed as arguments at the moment!") })
+        .filter_map(|(pat, ty)| if let Type::Path(t) = *ty { Some((pat, t)) } else { panic!("Only simple owned types are allowed as arguments at the moment!") })
+        .map(|(pat, ty)| (pat.ident, ty.path))
+        .collect()
 }
 
 fn generate_test(func: TsFunc) -> proc_macro2::TokenStream {
-    let TsFunc { name, binding } = func;
+    let TsFunc { name, binding, args } = func;
+    let arg_names = args.iter().map(|(ident, _)| ident.to_string()).collect::<Vec<_>>();
+    let arg_types = args.iter().map(|(_, path)| path).collect::<Vec<_>>();
+
     let test_fn = format_ident!("export_function_bindings_{}", name);
 
     let dir = "../src-gen";
@@ -62,9 +79,14 @@ fn generate_test(func: TsFunc) -> proc_macro2::TokenStream {
         #[test]
         fn #test_fn() {
             use std::fs;
+            use ts_rs::TS;
+
+            let types = vec![#(#arg_types::name()),*];
+            let names = vec![#(#arg_names),*];
+            let args = types.iter().enumerate().map(|(index, elem)| [names[index].to_owned(), elem.to_owned()].join(": ")).collect::<Vec<String>>().join(", ");
 
             fs::create_dir_all(#dir).expect("Could not create directory");
-            fs::write(#file_name, #content).expect("Could not write generated function binding to file");
+            fs::write(#file_name, #content.replace("%0", args.as_str()).replace("%1", names.join(", ").as_str())).expect("Could not write generated function binding to file");
         }
     }
 }
