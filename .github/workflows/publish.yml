@@ -37,13 +37,7 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v3
-      - name: Publish macro package
+      - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_LOGIN }}
-        run: cd macro && cargo publish
-
-      - uses: actions/checkout@v3
-      - name: Publish core package
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_LOGIN }}
-        run: cd ../core && cargo publish
+        run: cargo publish
