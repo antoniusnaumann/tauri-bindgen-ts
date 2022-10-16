@@ -12,3 +12,4 @@ authors = ["Antonius Naumann"]
 [dependencies]
 ts-rs = "6.2.0"
 tauri-bindgen-ts-macro = { path = "./tauri-bindgen-ts-macro", version = "0.1.0-alpha02" }
+serde = { version = "1.0.145", features = ["derive"] }
