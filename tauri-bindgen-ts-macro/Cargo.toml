@@ -1,14 +1,18 @@
 [package]
-name = "tauri-bindgen-ts"
+name = "tauri-bindgen-ts-macro"
 version = "0.1.0-alpha02"
 edition = "2021"
-description = "Generate Typescript bindings to Rust types and functions in a Tauri app"
+description = "Macro for tauri-bindgen-ts"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/antoniusnaumann/tauri-bindgen-ts"
 authors = ["Antonius Naumann"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+proc-macro = true
+
 [dependencies]
-ts-rs = "6.2.0"
-tauri-bindgen-ts-macro = { path = "./tauri-bindgen-ts-macro", version = "0.1.0-alpha02" }
+proc-macro2 = "1.0.47"
+quote = "1.0.21"
+syn = { version = "1.0.102", features = ["extra-traits", "full"] }
